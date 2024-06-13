@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  Test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          lfs: true
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install pip and Pipenv
+        run: |
+          pip install -U pip pipenv
+        working-directory: src
+
+      - name: Install project dependencies with pipenv
+        run: |
+          pipenv install --verbose --categories=packages,dev-packages
+        working-directory: src
+
+      - name: Install the package itself
+        run: |
+          pipenv install .
+        working-directory: src
+
+      - name: Run tests
+        run: |
+          pipenv run make test
+        working-directory: src
+
+      # - name: Upload Python coverage reports to Codecov
+      #   uses: codecov/codecov-action@v4
+      #   with:
+      #     flags: python
+      #     directory: backend
+      #   env:
+      #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  Lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          lfs: true
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install pip and Pipenv
+        run: |
+          pip install -U pip pipenv
+        working-directory: src
+
+      - name: Install project dependencies with pipenv
+        run: |
+          pipenv install --verbose --categories=packages,dev-packages
+        working-directory: src
+
+      - name: Install the package itself
+        run: |
+          pipenv install .
+        working-directory: src
+
+      - name: Run all lints
+        run: |
+          pipenv run make lint
+        working-directory: src

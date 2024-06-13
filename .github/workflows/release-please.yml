@@ -1,0 +1,20 @@
+on:
+  push:
+    branches:
+      - main
+
+name: release-please
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Create GitHub release
+        uses: GoogleCloudPlatform/release-please-action@v4
+        id: release
+        with:
+          release-type: python
+          package-name: varfish-installer
+          token: ${{ secrets.BOT_TOKEN }}
+
