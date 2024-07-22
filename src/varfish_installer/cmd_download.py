@@ -12,7 +12,7 @@ DEFAULT_CONFIG = DownloadConfig()
 
 
 @app.command()
-def install(
+def download(
     dst_path: pathlib.Path,
     base_dir: str = DEFAULT_CONFIG.base_dir,
     static_infix: str = DEFAULT_CONFIG.static_infix,
