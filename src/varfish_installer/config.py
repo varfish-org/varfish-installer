@@ -1,7 +1,9 @@
 from enum import Enum
+import typing
 from typing import Optional
 
-from pydantic import BaseModel
+from loguru import logger
+from pydantic import BaseModel, ConfigDict
 
 
 class TlsCertificateMode(str, Enum):
@@ -115,6 +117,130 @@ class DownloadDataset(str, Enum):
 
     #: CADA-Prio Data; from GitHub.
     CADA_PRIO = "cada-prio"
+
+
+class DatasetCategory(str, Enum):
+    """Category for a datasets."""
+
+    #: Data for annonars.
+    ANNONARS = "annonars"
+    #: Data for Mehari.
+    MEHARI = "mehari"
+    #: Tracks for genome browser.
+    TRACKS = "tracks"
+    #: Data for viguno.
+    VIGUNO = "viguno"
+    #: Data for the VarFish server worker.
+    WORKER = "worker"
+
+
+class ManifestEntry(BaseModel):
+    """Entry in the manifest file."""
+
+    model_config = ConfigDict(frozen=True)
+
+    #: Size of the file.
+    size: int
+    #: MD5 checksum of file.
+    md5: str
+    #: SHA256 checksum of file.
+    sha256: str
+    #: Name of the file.
+    name: str
+
+
+class Manifest(BaseModel):
+    """Information from the manifest of a dataset."""
+
+    model_config = ConfigDict(frozen=True)
+
+    #: Raw manifest text content.
+    raw_content: str
+    #: Path that hashdeep was invoked from
+    hashdeep_invocation_path: Optional[str]
+    #: SHA256 checksum of raw content (minus last line).
+    sha256_checksum: Optional[str]
+    #: The manifest entries.
+    entries: list[ManifestEntry]
+
+
+class ManifestParser:
+    """Helper class to parse hashdeep manifest files."""
+
+    def __init__(self, *, path: Optional[str] = None, inputf: Optional[typing.TextIO] = None):
+        #: Path to input file (mutually exclusive with inputf).
+        self.path = path
+        #: Input file (mutually exclusive with path).
+        self.inputf = inputf
+
+        if self.path and self.inputf:
+            raise ValueError("Only one of path or inputf must be given.")
+        elif not self.path and not self.inputf:
+            raise ValueError("One of path or inputf must be given.")
+
+    def parse(self) -> Manifest:
+        """Parse a manifest file."""
+        if self.path:
+            with open(self.path, "rt") as inputf:
+                return self._parse(inputf)
+        else:
+            assert self.inputf is not None, "checked in __init__"
+            return self._parse(self.inputf)
+
+    def _parse(self, inputf: typing.TextIO) -> Manifest:
+        """Implementation of parsing manifest file."""
+        raw_content = inputf.read()
+        hashdeep_invocation_path = ""
+        sha256_checksum = ""
+        entries = []
+
+        for lineno, line in enumerate(raw_content.splitlines()):
+            if lineno == 0:
+                if ":" not in line:
+                    raise ValueError(f"First line must contain ':' but got: {line}")
+                hashdeep_invocation_path = line.split(":")[1].strip()
+            elif line.startswith("## EOF"):
+                if "## EOF SHA256=" not in line:
+                    raise ValueError(f"Expected '## EOF SHA256=' in line {lineno} but got: {line}")
+                sha256_checksum = line.split("=")[-1]
+            elif not line.startswith("##") and not line.startswith("%%%%"):
+                parts = line.split(",")
+                if len(parts) != 4:
+                    raise ValueError(
+                        f"Expected 4 parts in line {lineno} but got {len(parts)}: {line}"
+                    )
+                size, md5, sha256, name = parts
+                entries.append(ManifestEntry(size=int(size), md5=md5, sha256=sha256, name=name))
+
+        if not hashdeep_invocation_path:
+            logger.warning("No SHA256 checksum found in manifest")
+        if not sha256_checksum:
+            logger.warning("No SHA256 checksum found in manifest")
+
+        return Manifest(
+            raw_content=raw_content,
+            hashdeep_invocation_path=hashdeep_invocation_path,
+            sha256_checksum=sha256_checksum,
+            entries=entries,
+        )
+
+
+class DatasetInfo(BaseModel):
+    """Store information about one dataset."""
+
+    #: Dataset name.
+    name: str
+    #: Dataset category.
+    category: DatasetCategory
+    #: Optional dataset release.
+    release: Optional[GenomeRelease]
+    #: Raw version string.
+    version_raw: str
+    #: Parsed version where the key points at the dataset-specific
+    #: input dataset name and the value is this dataset's version.
+    version_parsed: dict[str, str]
+    #: The manifest of the dataset.
+    manifest: Optional[Manifest]
 
 
 class DownloadConfig(BaseConfig):
