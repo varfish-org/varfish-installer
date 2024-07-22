@@ -261,3 +261,11 @@ class DownloadConfig(BaseConfig):
 
     #: The datasets to download, empty list for all.
     datasets: list[DownloadDataset] = []
+
+
+class DatasetInfoGenerator:
+    """Helper class to load dataset information."""
+
+    def __init__(self, config: DownloadConfig):
+        #: Configuration to use.
+        self.config = config
