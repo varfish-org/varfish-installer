@@ -184,6 +184,7 @@ class ManifestParser:
             with open(self.path, "rt") as inputf:
                 return self._parse(inputf)
         else:
+            assert self.inputf is not None, "checked in __init__"
             return self._parse(self.inputf)
 
     def _parse(self, inputf: typing.TextIO) -> Manifest:
@@ -195,11 +196,11 @@ class ManifestParser:
 
         for lineno, line in enumerate(raw_content.splitlines()):
             if lineno == 0:
-                if not ":" in line:
+                if ":" not in line:
                     raise ValueError(f"First line must contain ':' but got: {line}")
                 hashdeep_invocation_path = line.split(":")[1].strip()
             elif line.startswith("## EOF"):
-                if not "## EOF SHA256=" in line:
+                if "## EOF SHA256=" not in line:
                     raise ValueError(f"Expected '## EOF SHA256=' in line {lineno} but got: {line}")
                 sha256_checksum = line.split("=")[-1]
             elif not line.startswith("##") and not line.startswith("%%%%"):

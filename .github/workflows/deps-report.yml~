@@ -11,11 +11,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
 
       - name: deps-report
         uses: MeilleursAgents/deps-report@master
         with:
-          file: backend/Pipfile.lock
+          file: /Pipfile.lock
           github_token: ${{ secrets.GITHUB_TOKEN }}
