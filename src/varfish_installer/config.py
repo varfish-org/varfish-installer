@@ -5,6 +5,11 @@ from typing import Optional
 from loguru import logger
 from pydantic import BaseModel, ConfigDict
 
+#: S3 endpoint URL for VarFish.
+VARFISH_S3_ENDPOINT_URL = "https://ceph-s3-public.cubi.bihealth.org"
+#: S3 Bucket name.
+VARFISH_S3_BUCKET = "varfish-public"
+
 
 class TlsCertificateMode(str, Enum):
     """Select the TLS certificate mode."""
@@ -247,7 +252,9 @@ class DownloadConfig(BaseConfig):
     """Configuration for the download command."""
 
     #: S3 endpoint URL.
-    s3_endpoint_url: str = "https://ceph-s3-public.cubi.bihealth.org"
+    s3_endpoint_url: str = VARFISH_S3_ENDPOINT_URL
+    #: The bucket name.
+    s3_bucket: str = VARFISH_S3_BUCKET
 
     #: Base directory for config, volumes, and secrets.
     base_dir: str = ".prod"

@@ -4,15 +4,18 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-typer = "*"
+boto3 = "*"
 loguru = "*"
 pydantic = "*"
+typer = "*"
 
 [dev-packages]
-pyright = "*"
-flake8 = "*"
 black = "*"
+boto3-stubs = "*"
+flake8 = "*"
 isort = "*"
+moto = {extras = ["s3"], version = "*"}
+pyright = "*"
 pytest = "*"
 syrupy = "*"
 
